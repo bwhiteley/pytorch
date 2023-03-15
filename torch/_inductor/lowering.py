@@ -2058,6 +2058,10 @@ def index_put_(self, indices, values, accumulate=False):
         if index is not None and index.get_dtype() in {torch.bool, torch.uint8}:
             return index_put_fallback(self, indices, values, accumulate)
 
+    # Fallback in torch deterministic mode
+    if torch.are_deterministic_algorithms_enabled():
+        return index_put_fallback(self, indices, values, accumulate)
+
     x_size = self.get_size()
     x_ndim = len(x_size)
 
@@ -2146,7 +2150,7 @@ def scatter_fallback(
 ):
     if reduce not in {None, "sum"} or (
         reduce == "sum" and self.get_dtype() in {torch.bool, torch.int64}
-    ):
+    ) or torch.are_deterministic_algorithms_enabled():
         self.realize()
         return fallback_handler(fn)(
             self, dim, index, src, reduce=reduce, include_self=include_self
