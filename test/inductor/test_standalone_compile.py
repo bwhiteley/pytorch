@@ -96,6 +96,18 @@ class TestStandaloneInductor(TestCase):
         actual = mod_opt(inp)
         self.assertEqual(actual, correct)
 
+    def test_inductor_via_op_with_multiple_outputs(self):
+        op_name = "torch.ops.aten.native_layer_norm.default"
+        op = eval(op_name)
+        x1 = torch.randn((2, 512, 128))
+        x2 = [128]
+        x3 = torch.randn((128))
+        x4 = torch.randn((128,))
+        x5 = 1e-6
+        mod, inp = gen_gm_and_inputs(op, (x1, x2, x3, x4, x5), {})
+        mod_opt = inductor.compile(mod, inp)
+        self.assertEqual(mod(*inp), mod_opt(*inp))
+
 
 if __name__ == "__main__":
     if HAS_CPU:
